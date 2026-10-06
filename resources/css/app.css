@@ -1,0 +1,25 @@
+@import 'cropperjs/dist/cropper.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* Panduan crop berbentuk lingkaran (foto profil). */
+.cropper-round .cropper-view-box,
+.cropper-round .cropper-face {
+    border-radius: 50%;
+}
