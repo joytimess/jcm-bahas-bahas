@@ -4,6 +4,7 @@
     </x-slot>
 
     @include('threads._api')
+    <x-follow-list-modal />
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/css/glightbox.min.css">
     <script src="https://cdn.jsdelivr.net/npm/glightbox@3.3.0/dist/js/glightbox.min.js"></script>
@@ -98,16 +99,17 @@
                                 Akun privat
                             </span>
                         </div>
-                        <dl class="mt-3 flex gap-6">
-                            <div class="flex items-baseline gap-1.5">
-                                <dt class="order-2 text-muted">pengikut</dt>
-                                <dd class="order-1 text-xl font-black" x-text="profile.followers_count"></dd>
-                            </div>
-                            <div class="flex items-baseline gap-1.5">
-                                <dt class="order-2 text-muted">mengikuti</dt>
-                                <dd class="order-1 text-xl font-black" x-text="profile.following_count"></dd>
-                            </div>
-                        </dl>
+                        <div class="mt-2 flex gap-2">
+                            <template x-for="t in ['followers', 'following']" :key="t">
+                                <button type="button" :disabled="!profile.can_view_threads"
+                                        @click="$dispatch('open-follow-list', { userId: profile.id, type: t })"
+                                        :title="profile.can_view_threads ? '' : 'Akun ini privat'"
+                                        class="inline-flex min-h-[44px] items-baseline gap-1.5 rounded-full px-2 py-2 hover:bg-ground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default disabled:hover:bg-transparent">
+                                    <span class="text-xl font-black" x-text="t === 'followers' ? profile.followers_count : profile.following_count"></span>
+                                    <span class="text-muted" x-text="t === 'followers' ? 'pengikut' : 'mengikuti'"></span>
+                                </button>
+                            </template>
+                        </div>
                     </div>
 
                     <button type="button" @click="toggleFollow()" :disabled="busy" :aria-pressed="(profile.follow_status !== 'none').toString()"

@@ -67,3 +67,33 @@ it('skips likes on deleted or no-longer-visible threads and other users likes', 
     Sanctum::actingAs($this->me);
     $this->getJson('/api/me/likes')->assertOk()->assertJsonCount(0, 'data');
 });
+
+it('lists followers and following with search', function () {
+    $ani = User::factory()->create(['name' => 'Ani Lestari']);
+    $budi = User::factory()->create(['name' => 'Budi Santoso']);
+    $ani->following()->attach($this->me->id);
+    $budi->following()->attach($this->me->id);
+    $this->me->following()->attach($budi->id);
+
+    $this->getJson("/api/users/{$this->me->id}/followers")->assertOk()->assertJsonCount(2, 'data');
+    $this->getJson("/api/users/{$this->me->id}/followers?search=ani")
+        ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'Ani Lestari');
+    $this->getJson("/api/users/{$this->me->id}/following")
+        ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $budi->id);
+    $this->getJson("/api/users/{$this->me->id}/followers?search=%25")->assertOk()->assertJsonCount(0, 'data');
+});
+
+it('hides follow lists of private accounts until approved', function () {
+    $private = User::factory()->create(['is_private' => true]);
+
+    $this->getJson("/api/users/{$private->id}/followers")->assertForbidden();
+    $this->getJson("/api/users/{$private->id}/following")->assertForbidden();
+
+    $this->me->following()->attach($private->id);
+    $this->getJson("/api/users/{$private->id}/followers")->assertOk()->assertJsonCount(1, 'data');
+});
+
+it('renders the follow list popup on profile pages', function () {
+    $this->actingAs($this->me)->get('/profile')->assertOk()->assertSee('follow-list-title', false);
+    $this->actingAs($this->me)->get("/users/{$this->other->id}")->assertOk()->assertSee('follow-list-title', false);
+});

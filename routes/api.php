@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->name('api.')->group(function () {
     Route::get('users/suggestions', [UserController::class, 'suggestions']);
     Route::get('users/{user}', [UserController::class, 'show']);
     Route::get('users/{user}/threads', [UserController::class, 'threads']);
+    Route::get('users/{user}/followers', [UserController::class, 'followers']);
+    Route::get('users/{user}/following', [UserController::class, 'following']);
     Route::post('users/{user}/follow', [FollowController::class, 'toggle']);
 
     Route::get('me/likes', [MyLikeController::class, 'index']);

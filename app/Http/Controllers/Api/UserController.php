@@ -58,6 +58,38 @@ class UserController extends Controller
         );
     }
 
+    public function followers(Request $request, User $user)
+    {
+        return $this->connections($request, $user, $user->followers());
+    }
+
+    public function following(Request $request, User $user)
+    {
+        return $this->connections($request, $user, $user->following());
+    }
+
+    /** Daftar pengikut/diikuti dengan pencarian nama; tertutup untuk akun privat yang belum disetujui. */
+    private function connections(Request $request, User $user, $relation)
+    {
+        abort_unless($user->threadsVisibleTo($request->user()), 403, 'Akun ini privat.');
+
+        $search = trim((string) $request->query('search', ''));
+
+        $page = $relation
+            ->when($search !== '', fn ($q) => $q->where('users.name', 'like', '%'.addcslashes($search, '%_\\').'%'))
+            ->orderByDesc('follows.created_at')
+            ->select(['users.id', 'users.name', 'users.avatar'])
+            ->paginate(20);
+
+        $page->getCollection()->transform(fn (User $u) => [
+            'id' => $u->id,
+            'name' => $u->name,
+            'avatar_url' => $u->avatar_url,
+        ]);
+
+        return $page;
+    }
+
     /** 5 pengguna terbaru selain diri sendiri. */
     public function suggestions(Request $request): JsonResponse
     {

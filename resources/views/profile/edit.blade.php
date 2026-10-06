@@ -1,5 +1,6 @@
 <x-app-layout>
     @include('threads._api')
+    <x-follow-list-modal />
 
     <script>
         function followRequests() {
@@ -41,16 +42,18 @@
             <div class="min-w-0 flex-1">
                 <h1 class="truncate text-2xl font-black tracking-tight">{{ $user->name }}</h1>
                 <p class="truncate text-muted">{{ $user->email }}</p>
-                <dl class="mt-3 flex gap-6">
-                    <div class="flex items-baseline gap-1.5">
-                        <dt class="order-2 text-muted">pengikut</dt>
-                        <dd class="order-1 text-xl font-black">{{ $user->followers_count }}</dd>
-                    </div>
-                    <div class="flex items-baseline gap-1.5">
-                        <dt class="order-2 text-muted">mengikuti</dt>
-                        <dd class="order-1 text-xl font-black">{{ $user->following_count }}</dd>
-                    </div>
-                </dl>
+                <div class="mt-2 flex gap-2" x-data>
+                    <button type="button" @click="$dispatch('open-follow-list', { userId: {{ $user->id }}, type: 'followers' })"
+                            class="inline-flex min-h-[44px] items-baseline gap-1.5 rounded-full px-2 py-2 hover:bg-ground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <span class="text-xl font-black">{{ $user->followers_count }}</span>
+                        <span class="text-muted">pengikut</span>
+                    </button>
+                    <button type="button" @click="$dispatch('open-follow-list', { userId: {{ $user->id }}, type: 'following' })"
+                            class="inline-flex min-h-[44px] items-baseline gap-1.5 rounded-full px-2 py-2 hover:bg-ground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <span class="text-xl font-black">{{ $user->following_count }}</span>
+                        <span class="text-muted">mengikuti</span>
+                    </button>
+                </div>
             </div>
         </section>
 
