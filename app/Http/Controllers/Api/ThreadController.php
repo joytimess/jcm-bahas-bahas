@@ -5,20 +5,26 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\HandlesImages;
 use App\Http\Controllers\Concerns\QueriesThreads;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ThreadIndexRequest;
 use App\Http\Resources\ThreadResource;
 use App\Models\Thread;
+use App\Services\FeedService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
 class ThreadController extends Controller
 {
     use HandlesImages, QueriesThreads;
 
-    public function index(Request $request)
+    public function index(ThreadIndexRequest $request, FeedService $feed): AnonymousResourceCollection
     {
+        $data = $request->validated();
+
         return ThreadResource::collection(
-            $this->threadQuery($request)->latest()->paginate(15)
+            $feed->paginate($request->user(), $data['feed'] ?? 'all', (int) ($data['page'] ?? 1))
+                ->appends($request->safe()->except('page'))
         );
     }
 

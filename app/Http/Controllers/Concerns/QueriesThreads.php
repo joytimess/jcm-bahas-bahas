@@ -2,19 +2,15 @@
 
 namespace App\Http\Controllers\Concerns;
 
-use App\Models\Thread;
+use App\Services\ThreadQueryService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 trait QueriesThreads
 {
     /** Query thread siap tampil: hanya yang boleh dilihat pengguna, lengkap dengan hitungan dan status like. */
-    protected function threadQuery(Request $request)
+    protected function threadQuery(Request $request): Builder
     {
-        $me = $request->user();
-
-        return Thread::visibleTo($me)
-            ->with(['user:id,name,avatar', 'images'])
-            ->withCount(['comments', 'likes'])
-            ->withExists(['likes as liked_by_me' => fn ($q) => $q->where('user_id', $me->id)]);
+        return app(ThreadQueryService::class)->forViewer($request->user());
     }
 }
