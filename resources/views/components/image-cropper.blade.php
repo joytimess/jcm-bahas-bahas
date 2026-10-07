@@ -21,7 +21,7 @@
             <div class="h-[55vh] max-h-[520px] w-full">
                 <img x-ref="image" :src="src" @load="setup()" alt="Gambar yang akan dipotong" class="block max-w-full">
             </div>
-            <p x-show="busy" class="absolute inset-0 flex items-center justify-center bg-ground/80 text-muted">Memuat...</p>
+            <div x-show="busy" class="absolute inset-0 flex items-center justify-center bg-ground/80"><x-spinner /></div>
         </div>
 
         {{-- Pengaturan --}}

@@ -22,6 +22,7 @@
         <template x-for="t in threads" :key="t.id">
             @include('threads._card', ['editable' => false])
         </template>
+        @include('threads._quote-modal')
         <template x-for="u in users" :key="u.id">
             <article class="rounded-3xl border border-line bg-white p-5 sm:p-6">
                 <div class="flex items-center gap-3">

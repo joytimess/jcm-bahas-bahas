@@ -84,7 +84,7 @@
                 Kembali ke dashboard
             </a>
 
-            <p class="text-center text-muted" x-show="!profile" x-cloak>Memuat...</p>
+            <div class="flex justify-center py-6" x-show="!profile" x-cloak><x-spinner /></div>
 
             <!-- Header profil -->
             <template x-if="profile">
@@ -128,31 +128,37 @@
 
             <!-- Thread -->
             <template x-for="t in threads" :key="t.id">
-                <div class="p-5 sm:p-6 bg-white border border-line rounded-3xl">
+                <div class="p-5 sm:p-6 bg-white border border-line rounded-3xl" x-data="{ get v() { return t.type === 'repost' ? t.repost_of : t } }">
+                    <p x-show="t.type === 'repost'" class="mb-3 inline-flex items-center gap-1 text-sm text-muted">
+                        <span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">repeat</span>
+                        <span x-text="`${t.user.name} me-repost`"></span>
+                    </p>
                     <div class="flex items-center gap-3">
-                        <x-avatar name-expr="t.user.name" url-expr="t.user.avatar_url" size="h-10 w-10" />
+                        <x-avatar name-expr="v.user.name" url-expr="v.user.avatar_url" size="h-10 w-10" />
                         <div>
-                            <div class="font-medium text-ink" x-text="t.user.name"></div>
-                            <div class="text-xs text-muted" x-text="timeAgo(t.created_at)"></div>
+                            <div class="font-medium text-ink" x-text="v.user.name"></div>
+                            <div class="text-xs text-muted" x-text="timeAgo(v.created_at)"></div>
                         </div>
                     </div>
 
-                    <a :href="`/threads/${t.id}`" class="block mt-3 text-ink whitespace-pre-line break-words" x-text="t.body"></a>
+                    <a :href="`/threads/${v.id}`" class="block mt-3 text-ink whitespace-pre-line break-words" x-text="v.body"></a>
 
-                    <div class="mt-3 grid gap-2 items-start" :class="t.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'" x-show="t.images.length">
-                        <template x-for="(img, i) in t.images" :key="img.id">
-                            <img :src="img.url" alt="" @click="openImage(t.images, i)" class="w-full h-auto rounded-2xl cursor-zoom-in">
+                    <div class="mt-3 grid gap-2 items-start" :class="v.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'" x-show="v.images.length">
+                        <template x-for="(img, i) in v.images" :key="img.id">
+                            <img :src="img.url" alt="" @click="openImage(v.images, i)" class="w-full h-auto rounded-2xl cursor-zoom-in">
                         </template>
                     </div>
 
+                    @include('threads._quote-embed', ['expr' => 'v'])
+
                     <div class="mt-4 flex items-center gap-6 text-sm text-muted">
-                        <button @click="like(t)" class="inline-flex min-h-[36px] items-center gap-1 hover:text-red-500" :class="t.liked_by_me && 'text-red-500'">
+                        <button @click="like(v)" class="inline-flex min-h-[36px] items-center gap-1 hover:text-red-500" :class="v.liked_by_me && 'text-red-500'">
                             <span class="material-symbols-outlined" style="font-size: 20px;" aria-hidden="true">favorite</span>
-                            <span x-text="t.likes_count"></span>
+                            <span x-text="v.likes_count"></span>
                         </button>
-                        <a :href="`/threads/${t.id}`" class="inline-flex min-h-[36px] items-center gap-1 hover:text-ink">
+                        <a :href="`/threads/${v.id}`" class="inline-flex min-h-[36px] items-center gap-1 hover:text-ink">
                             <span class="material-symbols-outlined" style="font-size: 20px;" aria-hidden="true">chat_bubble</span>
-                            <span x-text="t.comments_count"></span>
+                            <span x-text="v.comments_count"></span>
                         </a>
                     </div>
                 </div>

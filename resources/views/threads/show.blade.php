@@ -22,9 +22,16 @@
                 editBody: '',
                 threadEditing: false,
                 threadEditBody: '',
+                repostBusy: {},
+                quoting: null,
+                quoteBody: '',
+                quoteBusy: false,
+                quoteError: '',
 
                 async init() {
                     this.thread = (await api('GET', `/api/threads/${threadId}`)).data;
+                    // Halaman repost diarahkan ke thread aslinya.
+                    if (this.thread.type === 'repost' && this.thread.repost_of) return window.location.replace(`/threads/${this.thread.repost_of.id}`);
                     await this.loadComments();
                 },
 
@@ -52,6 +59,29 @@
                     const res = await api('POST', url);
                     item.liked_by_me = res.liked;
                     item.likes_count = res.likes_count;
+                },
+
+                async repost(v) {
+                    if (this.repostBusy[v.id]) return;
+                    this.repostBusy[v.id] = true; this.error = '';
+                    try {
+                        const res = await api('POST', `/api/threads/${v.id}/repost`);
+                        v.reposted_by_me = res.reposted;
+                        v.reposts_count = res.reposts_count;
+                    } catch (e) { this.error = e.message; }
+                    finally { this.repostBusy[v.id] = false; }
+                },
+
+                startQuote(v) { this.quoting = v; this.quoteBody = ''; this.quoteError = ''; },
+
+                async submitQuote() {
+                    if (this.quoteBusy || !this.quoting || !this.quoteBody.trim()) return;
+                    this.quoteBusy = true; this.quoteError = '';
+                    try {
+                        const res = await api('POST', '/api/threads', { body: this.quoteBody, quote_of: this.quoting.id });
+                        window.location.assign(`/threads/${res.data.id}`);
+                    } catch (e) { this.quoteError = Object.values(e.errors || {}).flat()[0] || e.message; }
+                    finally { this.quoteBusy = false; }
                 },
 
                 async saveThread() {
@@ -154,6 +184,8 @@
                         </template>
                     </div>
 
+                    @include('threads._quote-embed', ['expr' => 'thread'])
+
                     <div class="mt-4 flex items-center gap-6 text-sm text-muted">
                         <button @click="like(thread, `/api/threads/${thread.id}/like`)" class="inline-flex items-center gap-1 hover:text-red-500" :class="thread.liked_by_me && 'text-red-500'">
                             <span class="material-symbols-outlined" style="font-size: 20px;">favorite</span>
@@ -163,9 +195,12 @@
                             <span class="material-symbols-outlined" style="font-size: 20px;">chat_bubble</span>
                             <span x-text="thread.comments_count"></span>
                         </span>
+                        @include('threads._repost-menu', ['expr' => 'thread'])
                     </div>
                 </div>
             </template>
+
+            @include('threads._quote-modal')
 
             <!-- Compose comment -->
             <div class="p-5 sm:p-6 bg-white border border-line rounded-3xl">

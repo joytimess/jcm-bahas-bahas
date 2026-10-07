@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\HandlesImages;
 use App\Http\Controllers\Concerns\QueriesThreads;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreThreadRequest;
 use App\Http\Requests\Api\ThreadIndexRequest;
+use App\Http\Requests\Api\UpdateThreadRequest;
 use App\Http\Resources\ThreadResource;
 use App\Models\Thread;
 use App\Services\FeedService;
+use App\Services\RepostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -33,12 +36,13 @@ class ThreadController extends Controller
         return new ThreadResource($this->threadQuery($request)->findOrFail($thread->id));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreThreadRequest $request, RepostService $reposts): JsonResponse
     {
-        $data = $request->validate(['body' => ['required', 'string', 'max:280']] + $this->imageRules());
+        $data = $request->validated();
+        $quoteOf = isset($data['quote_of']) ? $reposts->quoteTarget($request->user(), (int) $data['quote_of'])->id : null;
 
-        $thread = DB::transaction(function () use ($request, $data) {
-            $thread = $request->user()->threads()->create(['body' => $data['body']]);
+        $thread = DB::transaction(function () use ($request, $data, $quoteOf) {
+            $thread = $request->user()->threads()->create(['body' => $data['body'], 'repost_of_id' => $quoteOf]);
             $this->syncImages($request, $thread);
 
             return $thread;
@@ -48,11 +52,9 @@ class ThreadController extends Controller
             ->response()->setStatusCode(201);
     }
 
-    public function update(Request $request, Thread $thread): ThreadResource
+    public function update(UpdateThreadRequest $request, Thread $thread): ThreadResource
     {
-        abort_unless($thread->user_id === $request->user()->id, 403);
-
-        $data = $request->validate(['body' => ['sometimes', 'required', 'string', 'max:280']] + $this->imageRules());
+        $data = $request->validated();
 
         DB::transaction(function () use ($request, $thread, $data) {
             if (isset($data['body'])) {

@@ -1,15 +1,25 @@
-                <div class="p-5 sm:p-6 bg-white border border-line rounded-3xl">
+                {{-- t = baris feed; v = thread yang ditampilkan (thread asli bila t adalah repost). --}}
+                <div class="p-5 sm:p-6 bg-white border border-line rounded-3xl" x-data="{ get v() { return t.type === 'repost' ? t.repost_of : t } }">
+                    <template x-if="t.type === 'repost'">
+                        <div class="mb-3 flex items-center justify-between gap-2 text-sm text-muted">
+                            <a :href="profileUrl(t.user.id)" class="inline-flex items-center gap-1 rounded-full hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                <span class="material-symbols-outlined" style="font-size: 18px;" aria-hidden="true">repeat</span>
+                                <span x-text="t.user.id === ME ? 'Kamu me-repost' : `${t.user.name} me-repost`"></span>
+                            </a>
+                        </div>
+                    </template>
+
                     <div class="flex items-start justify-between">
-                        <a :href="profileUrl(t.user.id)" class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                            <x-avatar name-expr="t.user.name" url-expr="t.user.avatar_url" size="h-10 w-10" />
+                        <a :href="profileUrl(v.user.id)" class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                            <x-avatar name-expr="v.user.name" url-expr="v.user.avatar_url" size="h-10 w-10" />
                             <div class="min-w-0">
-                                <div class="break-words font-medium text-ink hover:underline" x-text="t.user.name"></div>
-                                <div class="text-xs text-muted" x-text="timeAgo(t.created_at)"></div>
+                                <div class="break-words font-medium text-ink hover:underline" x-text="v.user.name"></div>
+                                <div class="text-xs text-muted" x-text="timeAgo(v.created_at)"></div>
                             </div>
                         </a>
 
                         @if ($editable ?? false)
-                        <div class="relative" x-data="{ open: false }" x-show="t.user.id === ME" x-cloak @click.outside="open = false" @keydown.escape.window="open = false">
+                        <div class="relative" x-data="{ open: false }" x-show="t.user.id === ME && t.type !== 'repost'" x-cloak @click.outside="open = false" @keydown.escape.window="open = false">
                             <button type="button" @click="open = !open" class="min-h-[44px] min-w-[44px] rounded-full text-muted hover:bg-ground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Aksi postingan">
                                 <span class="material-symbols-outlined">more_vert</span>
                             </button>
@@ -31,7 +41,7 @@
 
                     <!-- Body / edit -->
                     <template x-if="editingId !== t.id">
-                        <a :href="`/threads/${t.id}`" class="block mt-3 rounded-xl text-ink whitespace-pre-line break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" x-text="t.body"></a>
+                        <a :href="`/threads/${v.id}`" class="block mt-3 rounded-xl text-ink whitespace-pre-line break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" x-text="v.body"></a>
                     </template>
                     <template x-if="editingId === t.id">
                         <div class="mt-3">
@@ -45,22 +55,25 @@
                     </template>
 
                     <!-- Images -->
-                    <div class="mt-3 grid gap-2 items-start" :class="t.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'" x-show="t.images.length">
-                        <template x-for="(img, i) in t.images" :key="img.id">
-                            <button type="button" @click="openImage(t.images, i)" :aria-label="`Buka gambar ${i + 1}`" class="rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"><img :src="img.url" alt="" class="w-full h-auto rounded-2xl cursor-zoom-in"></button>
+                    <div class="mt-3 grid gap-2 items-start" :class="v.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'" x-show="v.images.length">
+                        <template x-for="(img, i) in v.images" :key="img.id">
+                            <button type="button" @click="openImage(v.images, i)" :aria-label="`Buka gambar ${i + 1}`" class="rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"><img :src="img.url" alt="" class="w-full h-auto rounded-2xl cursor-zoom-in"></button>
                         </template>
                     </div>
 
+                    @include('threads._quote-embed', ['expr' => 'v'])
+
                     <!-- Actions -->
                     <div class="mt-4 flex items-center gap-6 text-sm text-muted">
-                        <button type="button" @click="like(t)" :disabled="likeBusy[t.id] === true" :aria-pressed="t.liked_by_me.toString()" aria-label="Sukai postingan" class="inline-flex min-h-[44px] items-center gap-1 rounded-full hover:text-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60" :class="t.liked_by_me && 'text-red-500'">
+                        <button type="button" @click="like(v)" :disabled="likeBusy[v.id] === true" :aria-pressed="v.liked_by_me.toString()" aria-label="Sukai postingan" class="inline-flex min-h-[44px] items-center gap-1 rounded-full hover:text-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60" :class="v.liked_by_me && 'text-red-500'">
                             <span class="material-symbols-outlined" style="font-size: 20px;">favorite</span>
-                            <span x-text="t.likes_count"></span>
+                            <span x-text="v.likes_count"></span>
                         </button>
-                        <a :href="`/threads/${t.id}`" aria-label="Buka komentar" class="inline-flex min-h-[44px] items-center gap-1 rounded-full hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <a :href="`/threads/${v.id}`" aria-label="Buka komentar" class="inline-flex min-h-[44px] items-center gap-1 rounded-full hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             <span class="material-symbols-outlined" style="font-size: 20px;">chat_bubble</span>
-                            <span x-text="t.comments_count"></span>
+                            <span x-text="v.comments_count"></span>
                         </a>
+                        @include('threads._repost-menu', ['expr' => 'v'])
                     </div>
-                    <p x-show="actionErrors[t.id]" x-text="actionErrors[t.id]" x-cloak class="mt-2 text-sm text-red-700" role="alert"></p>
+                    <p x-show="actionErrors[v.id]" x-text="actionErrors[v.id]" x-cloak class="mt-2 text-sm text-red-700" role="alert"></p>
                 </div>

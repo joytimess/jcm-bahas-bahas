@@ -4,6 +4,7 @@ export function listState() {
         loading: false, loadingMore: false, loadError: '', sessionExpired: false, generation: 0,
         likeBusy: {}, actionErrors: {}, followBusy: {}, followErrors: {},
         editingId: null, editBody: '', editBusy: false,
+        repostBusy: {}, quoting: null, quoteBody: '', quoteBusy: false, quoteError: '',
         async load(reset = false) {
             if (!reset && (this.loading || this.loadingMore)) return;
             const generation = reset ? ++this.generation : this.generation;
@@ -40,6 +41,34 @@ export function listState() {
                 t.liked_by_me = res.liked; t.likes_count = res.likes_count;
             } catch (error) { this.sessionExpired = [401, 419].includes(error.status); this.actionErrors[t.id] = window.discoveryError(error); }
             finally { this.likeBusy[t.id] = false; }
+        },
+        // Semua objek thread di daftar yang mewakili thread $id (baris biasa maupun thread asli di dalam repost/quote).
+        sameThreads(id) {
+            return this.threads.flatMap(item => [item, item.repost_of]).filter(item => item && item.id === id);
+        },
+        async repost(v) {
+            if (this.repostBusy[v.id]) return;
+            this.repostBusy[v.id] = true; this.actionErrors[v.id] = '';
+            try {
+                const res = await window.api('POST', `/api/threads/${v.id}/repost`);
+                for (const item of this.sameThreads(v.id)) { item.reposted_by_me = res.reposted; item.reposts_count = res.reposts_count; }
+                if (!res.reposted) {
+                    this.threads = this.threads.filter(item => !(item.type === 'repost' && item.user.id === window.ME && item.repost_of?.id === v.id));
+                }
+            } catch (error) { this.sessionExpired = [401, 419].includes(error.status); this.actionErrors[v.id] = window.discoveryError(error); }
+            finally { this.repostBusy[v.id] = false; }
+        },
+        startQuote(v) { this.quoting = v; this.quoteBody = ''; this.quoteError = ''; },
+        async submitQuote() {
+            if (this.quoteBusy || !this.quoting || !this.quoteBody.trim()) return;
+            this.quoteBusy = true; this.quoteError = '';
+            try {
+                const res = await window.api('POST', '/api/threads', { body: this.quoteBody, quote_of: this.quoting.id });
+                for (const item of this.sameThreads(this.quoting.id)) item.quotes_count = (item.quotes_count || 0) + 1;
+                if ('post' in this && !this.threads.some(item => item.id === res.data.id)) this.threads.unshift(res.data);
+                this.quoting = null;
+            } catch (error) { this.sessionExpired = [401, 419].includes(error.status); this.quoteError = window.discoveryError(error); }
+            finally { this.quoteBusy = false; }
         },
         openImage(images, index) {
             window.GLightbox({ elements: images.map(i => ({ href: i.url, type: 'image' })), startAt: index, loop: true }).open();

@@ -17,13 +17,13 @@
 
     <div data-source="{{ $source ?? '/api/threads' }}" x-data="discoveryFeed($el.dataset.source, @js($isDashboard ?? false))" @popstate.window="restoreFeed()" @follow-changed.window="followChanged()">
         <!-- Feed -->
-            @if ($isDashboard ?? false)
-                <div class="flex gap-2 rounded-3xl border border-line bg-white p-3" role="group" aria-label="Pilihan feed">
-                    <template x-for="option in [{ value: 'all', label: 'Semua' }, { value: 'following', label: 'Mengikuti' }]" :key="option.value">
-                        <button type="button" @click="selectFeed(option.value)" :aria-pressed="(activeFeed === option.value).toString()" :class="activeFeed === option.value ? 'bg-primary-tint text-primary-dark' : 'text-muted hover:bg-ground'" class="min-h-[44px] flex-1 rounded-full px-4 py-2.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" x-text="option.label"></button>
-                    </template>
-                </div>
-            @endif
+        @if ($isDashboard ?? false)
+            <div class="flex gap-2 rounded-3xl border border-line bg-white p-3" role="group" aria-label="Pilihan feed">
+                <template x-for="option in [{ value: 'all', label: 'Semua' }, { value: 'following', label: 'Mengikuti' }]" :key="option.value">
+                    <button type="button" @click="selectFeed(option.value)" :aria-pressed="(activeFeed === option.value).toString()" :class="activeFeed === option.value ? 'bg-primary-tint text-primary-dark' : 'text-muted hover:bg-ground'" class="min-h-[44px] flex-1 rounded-full px-4 py-2.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" x-text="option.label"></button>
+                </template>
+            </div>
+        @endif
         <div class="space-y-4">
             @if ($isDashboard ?? false)
                 <div class="lg:hidden"><x-discovery-search-form id="dashboard-search-mobile" :shortcut="true" /></div>
@@ -79,6 +79,7 @@
                 <p x-text="dashboard && activeFeed === 'following' ? 'Belum ada postingan dari akun yang kamu ikuti.' : 'Belum ada thread.'"></p>
                 <a x-show="dashboard && activeFeed === 'following'" href="{{ route('search', ['type' => 'users']) }}" class="mt-3 inline-flex min-h-[44px] items-center font-semibold text-primary underline">Cari pengguna</a>
             </div>
+            @include('threads._quote-modal')
             <x-discovery-status />
         </div>
     </div>

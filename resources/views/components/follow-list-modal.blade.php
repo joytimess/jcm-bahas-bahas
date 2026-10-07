@@ -95,7 +95,7 @@
                 </template>
             </ul>
 
-            <p class="py-6 text-center text-sm text-muted" x-show="loading">Memuat...</p>
+            <div class="flex justify-center py-6" x-show="loading"><x-spinner /></div>
             <p class="py-6 text-center text-sm text-red-700" x-show="!loading && error" x-text="error"></p>
             <p class="py-6 text-center text-sm text-muted" x-show="!loading && !error && !users.length"
                x-text="search ? 'Tidak ada yang cocok.' : (type === 'followers' ? 'Belum ada pengikut.' : 'Belum mengikuti siapa pun.')"></p>

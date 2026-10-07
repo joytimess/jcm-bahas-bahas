@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FollowRequestController;
 use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\Api\RepostController;
 use App\Http\Controllers\Api\MyLikeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ThreadController;
@@ -34,6 +35,7 @@ Route::middleware('auth:sanctum')->name('api.')->group(function () {
 
     Route::apiResource('threads', ThreadController::class);
     Route::post('threads/{thread}/like', [LikeController::class, 'thread']);
+    Route::post('threads/{thread}/repost', [RepostController::class, 'toggle']);
 
     Route::get('threads/{thread}/comments', [CommentController::class, 'index']);
     Route::post('threads/{thread}/comments', [CommentController::class, 'store']);

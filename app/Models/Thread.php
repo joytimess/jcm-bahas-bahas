@@ -13,7 +13,7 @@ class Thread extends Model
 {
     use FlagsDeleted;
 
-    protected $fillable = ['body'];
+    protected $fillable = ['body', 'repost_of_id'];
 
     protected $casts = ['is_deleted' => 'boolean'];
 
@@ -30,6 +30,34 @@ class Thread extends Model
                 ->orWhereHas('user', fn ($u) => $u->where('is_private', false))
                 ->orWhereHas('user.followers', fn ($f) => $f->where('follows.follower_id', $viewer->id));
         });
+    }
+
+    /** Thread asli yang di-repost atau di-quote. */
+    public function repostOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'repost_of_id');
+    }
+
+    /** Repost murni (tanpa body) atas thread ini. */
+    public function reposts(): HasMany
+    {
+        return $this->hasMany(self::class, 'repost_of_id')->whereNull('body');
+    }
+
+    /** Quote (repost dengan body) atas thread ini. */
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(self::class, 'repost_of_id')->whereNotNull('body');
+    }
+
+    /** post | repost | quote */
+    public function getTypeAttribute(): string
+    {
+        if (! $this->repost_of_id) {
+            return 'post';
+        }
+
+        return $this->body === null ? 'repost' : 'quote';
     }
 
     public function comments(): HasMany

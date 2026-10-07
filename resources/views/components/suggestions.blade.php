@@ -46,7 +46,7 @@
 <section x-data="suggestions()" @follow-changed.window="syncFollow($event.detail)" aria-labelledby="suggestions-title" class="rounded-3xl border border-line bg-white p-5">
     <h2 id="suggestions-title" class="text-lg font-bold">Pengguna baru</h2>
 
-    <p class="mt-4 text-sm text-muted" x-show="loading" x-cloak>Memuat...</p>
+    <div class="mt-4 flex justify-center" x-show="loading" x-cloak><x-spinner size="h-6 w-6" /></div>
     <p class="mt-4 text-sm text-muted" x-show="!loading && !loadError && !users.length" x-cloak>Belum ada pengguna lain.</p>
     <p class="mt-4 text-sm text-red-700" x-show="loadError" x-text="loadError" x-cloak role="alert"></p>
     <x-outline-button x-show="loadError && !sessionExpired" class="mt-2" @click="init()">Coba lagi</x-outline-button>

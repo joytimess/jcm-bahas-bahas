@@ -64,7 +64,7 @@
             </article>
         </template>
 
-        <p class="text-center text-muted" x-show="loading" x-cloak>Memuat...</p>
+        <div class="flex justify-center py-6" x-show="loading" x-cloak><x-spinner /></div>
         <p class="text-center text-muted" x-show="!loading && !items.length" x-cloak>Belum ada yang kamu sukai.</p>
 
         <div class="text-center" x-show="hasMore && !loading" x-cloak>
