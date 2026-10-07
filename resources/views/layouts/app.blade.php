@@ -25,7 +25,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-ground font-roboto text-ink antialiased">
-        <div class="mx-auto grid min-h-screen max-w-[1400px] gap-6 px-4 lg:grid-cols-4 lg:px-6">
+        <div {{ $attributes->merge(['class' => 'mx-auto grid min-h-screen max-w-[1400px] gap-6 px-4 lg:grid-cols-4 lg:px-6']) }}>
             <!-- Navigation (1/4, floating) -->
             @include('layouts.navigation')
 

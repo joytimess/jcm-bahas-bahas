@@ -2,6 +2,7 @@
     $user = Auth::user();
     $links = [
         ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'home', 'active' => request()->routeIs('dashboard', 'threads.*')],
+        ['route' => 'search', 'label' => 'Pencarian', 'icon' => 'search', 'active' => request()->routeIs('search')],
         ['route' => 'my.threads', 'label' => 'My Threads', 'icon' => 'article', 'active' => request()->routeIs('my.threads')],
         ['route' => 'my.likes', 'label' => 'My Likes', 'icon' => 'favorite', 'active' => request()->routeIs('my.likes')],
         ['route' => 'profile.edit', 'label' => 'Profile', 'icon' => 'person', 'active' => request()->routeIs('profile.edit')],
@@ -66,7 +67,7 @@
 
         @foreach ($links as $link)
             <a href="{{ route($link['route']) }}" @if ($link['active']) aria-current="page" @endif
-               class="flex min-h-[48px] min-w-[56px] flex-col items-center justify-center rounded-2xl px-1.5 text-[11px] whitespace-nowrap font-semibold {{ $focus }}
+               class="flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center rounded-2xl px-0.5 text-[10px] sm:text-[11px] whitespace-nowrap font-semibold {{ $focus }}
                       {{ $link['active'] ? 'text-primary' : 'text-muted' }}">
                 <span class="material-symbols-outlined" aria-hidden="true">{{ $link['icon'] }}</span>
                 {{ $link['label'] }}

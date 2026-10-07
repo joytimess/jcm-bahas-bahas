@@ -27,6 +27,7 @@
         if (!res.ok) {
             const err = new Error(json.message || 'Terjadi kesalahan.');
             err.errors = json.errors || {};
+            err.status = res.status;
             throw err;
         }
 

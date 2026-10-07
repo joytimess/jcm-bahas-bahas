@@ -11,10 +11,12 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('threads.index');
+    return view('threads.index', ['isDashboard' => true]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::view('/search', 'search.index')->name('search');
+
     Route::get('/threads/{thread}', function (Request $request, Thread $thread) {
         abort_unless($request->user()->canView($thread), 404);
 
