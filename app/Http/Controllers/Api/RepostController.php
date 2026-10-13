@@ -10,8 +10,10 @@ use Illuminate\Http\Request;
 
 class RepostController extends Controller
 {
-    public function toggle(Request $request, Thread $thread, RepostService $reposts): JsonResponse
+    public function __construct(private RepostService $reposts) {}
+
+    public function toggle(Request $request, Thread $thread): JsonResponse
     {
-        return response()->json($reposts->toggle($request->user(), $thread));
+        return response()->json($this->reposts->toggle($request->user(), $thread));
     }
 }

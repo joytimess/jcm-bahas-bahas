@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Http\Controllers\Concerns\HandlesImages;
+use App\Http\Requests\Concerns\HasImageRules;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreThreadRequest extends FormRequest
 {
-    use HandlesImages;
+    use HasImageRules;
 
     public function authorize(): bool
     {

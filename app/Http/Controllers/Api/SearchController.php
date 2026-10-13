@@ -11,15 +11,17 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SearchController extends Controller
 {
-    public function index(SearchRequest $request, SearchService $search): AnonymousResourceCollection
+    public function __construct(private SearchService $search) {}
+
+    public function index(SearchRequest $request): AnonymousResourceCollection
     {
         $data = $request->validated();
         $type = $data['type'] ?? 'threads';
         $page = (int) ($data['page'] ?? 1);
 
         $results = $type === 'users'
-            ? $search->users($request->user(), $data['q'], $page)
-            : $search->threads($request->user(), $data['q'], $page);
+            ? $this->search->users($request->user(), $data['q'], $page)
+            : $this->search->threads($request->user(), $data['q'], $page);
 
         $results->appends($request->safe()->except('page'));
 

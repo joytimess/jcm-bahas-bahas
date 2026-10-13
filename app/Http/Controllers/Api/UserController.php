@@ -2,111 +2,54 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Concerns\QueriesThreads;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MeResource;
+use App\Http\Resources\PaginatedListResource;
+use App\Http\Resources\SuggestedUserResource;
 use App\Http\Resources\ThreadResource;
+use App\Http\Resources\UserBriefResource;
+use App\Http\Resources\UserProfileResource;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UserController extends Controller
 {
-    use QueriesThreads;
+    public function __construct(private UserService $users) {}
 
-    /** Pengguna yang sedang login beserta hitungan followers dan following. */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->loadCount(['followers', 'following']);
-
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'avatar_url' => $user->avatar_url,
-            'is_private' => $user->is_private,
-            'followers_count' => $user->followers_count,
-            'following_count' => $user->following_count,
-        ]);
+        return response()->json(new MeResource($this->users->me($request->user())));
     }
 
-    /** Profil publik pengguna lain (tanpa email). Hitungan tetap tampil walau akun privat. */
     public function show(Request $request, User $user): JsonResponse
     {
-        $me = $request->user();
-        $user->loadCount(['followers', 'following']);
-
-        return response()->json(['data' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar_url' => $user->avatar_url,
-            'is_private' => $user->is_private,
-            'is_me' => $user->id === $me->id,
-            'followers_count' => $user->followers_count,
-            'following_count' => $user->following_count,
-            'follow_status' => $user->followStatusFor($me),
-            'can_view_threads' => $user->threadsVisibleTo($me),
-        ]]);
+        return response()->json(['data' => new UserProfileResource($this->users->show($request->user(), $user))]);
     }
 
-    /** Thread milik satu pengguna; 403 bila akunnya privat dan belum disetujui. */
-    public function threads(Request $request, User $user)
+    public function threads(Request $request, User $user): AnonymousResourceCollection
     {
-        abort_unless($user->threadsVisibleTo($request->user()), 403, 'Akun ini privat.');
-
-        return ThreadResource::collection(
-            $this->threadQuery($request)->where('threads.user_id', $user->id)->latest()->paginate(15)
-        );
+        return ThreadResource::collection($this->users->threads($request->user(), $user));
     }
 
-    public function followers(Request $request, User $user)
+    public function followers(Request $request, User $user): JsonResponse
     {
-        return $this->connections($request, $user, $user->followers());
+        return response()->json(new PaginatedListResource(
+            $this->users->followers($request->user(), $user, (string) $request->query('search', '')), UserBriefResource::class
+        ));
     }
 
-    public function following(Request $request, User $user)
+    public function following(Request $request, User $user): JsonResponse
     {
-        return $this->connections($request, $user, $user->following());
+        return response()->json(new PaginatedListResource(
+            $this->users->following($request->user(), $user, (string) $request->query('search', '')), UserBriefResource::class
+        ));
     }
 
-    /** Daftar pengikut/diikuti dengan pencarian nama; tertutup untuk akun privat yang belum disetujui. */
-    private function connections(Request $request, User $user, $relation)
-    {
-        abort_unless($user->threadsVisibleTo($request->user()), 403, 'Akun ini privat.');
-
-        $search = trim((string) $request->query('search', ''));
-
-        $page = $relation
-            ->when($search !== '', fn ($q) => $q->where('users.name', 'like', '%'.addcslashes($search, '%_\\').'%'))
-            ->orderByDesc('follows.created_at')
-            ->select(['users.id', 'users.name', 'users.avatar'])
-            ->paginate(20);
-
-        $page->getCollection()->transform(fn (User $u) => [
-            'id' => $u->id,
-            'name' => $u->name,
-            'avatar_url' => $u->avatar_url,
-        ]);
-
-        return $page;
-    }
-
-    /** 5 pengguna terbaru selain diri sendiri. */
     public function suggestions(Request $request): JsonResponse
     {
-        $me = $request->user();
-
-        $users = User::where('id', '!=', $me->id)
-            ->latest('id')
-            ->limit(5)
-            ->get(['id', 'name', 'avatar']);
-
-        return response()->json([
-            'data' => $users->map(fn (User $u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'avatar_url' => $u->avatar_url,
-                'follow_status' => $u->followStatusFor($me),
-            ])->values(),
-        ]);
+        return response()->json(['data' => SuggestedUserResource::collection($this->users->suggestions($request->user()))]);
     }
 }

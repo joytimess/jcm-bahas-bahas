@@ -2,19 +2,22 @@
 
 namespace App\Http\Requests\Api;
 
-use App\Http\Controllers\Concerns\HandlesImages;
+use App\Http\Requests\Concerns\HasImageRules;
+use App\Services\ThreadService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateThreadRequest extends FormRequest
 {
-    use HandlesImages;
+    use HasImageRules;
 
     /** Hanya pemilik yang boleh mengedit, dan repost murni tidak bisa diedit. */
     public function authorize(): bool
     {
         $thread = $this->route('thread');
 
-        return $thread->user_id === $this->user()?->id && $thread->type !== 'repost';
+        app(ThreadService::class)->assertEditable($this->user(), $thread);
+
+        return true;
     }
 
     public function rules(): array
